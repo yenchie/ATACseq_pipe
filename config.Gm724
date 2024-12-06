@@ -1,0 +1,28 @@
+# Global parameters
+
+## adapter path
+adapter=/bcst/JYL/JYL_qnap/Reference/Trimmomatic/Gm/adapter/Nextera.active.motif.PE.tn5.fa
+MINLEN=35
+
+## index path, asign your reference 
+chloroplast_bowtie2index=/bcst/JYL/JYL_qnap/db/Gm/Gm_v_1.1/Gm_mito_chloro/Gm_chloroplast_bowtie2index
+mitochondria_bowtie2index=/bcst/JYL/JYL_qnap/db/Gm/Gm_v_1.1/Gm_mito_chloro/Gm_mitochondria_bowtie2index
+bowtie2index=/bcst/JYL/JYL_qnap/db/Gm/GmaxWm82ISU_01/v2.1/Gmax_724_bowtie2index/Gmax_724_bowtie2index
+
+## piovt output result table of qc function 
+transpose=/bcst/JYL/JYL_qnap_2/YCWang/0_Script/000/Pipeline/ATAC_pipe/tool/transpose.pl
+
+## filter good quality read for final output
+mapq=30
+
+## insert size QC for pair-end
+CollectInsertSizeMetrics=/bcst/JYL/JYL_qnap_2/YCWang/0_Script/000/Pipeline/ATAC_pipe/tool/CollectInsertSizeMetrics.sh
+
+Shift_bam=/bcst/JYL/JYL_qnap_2/YCWang/0_Script/000/Pipeline/ATAC_pipe/tool/shift.bamtobigwig.v.1.sh
+
+## QC for NSC, RSC
+SPP=/bcst/JYL/JYL_qnap_2/YCWang/0_Script/000/Pipeline/ATAC_pipe/tool/SPP.v.3.0.sh
+
+MACS2=/bcst/JYL/JYL_qnap_2/YCWang/0_Script/000/Pipeline/ATAC_pipe/tool/MACS2.peakcalling.v.1.sh
+
+HMMRATAC=/bcst/JYL/JYL_qnap_2/YCWang/0_Script/000/Pipeline/ATAC_pipe/tool/HMMRATAC.peakcalling.v.1.sh
