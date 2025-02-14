@@ -60,9 +60,23 @@ grep E2 ./HMMRATAC/$sampleID.bedgraph > ./HMMRATAC/$sampleID.State2_regions.bed
 awk 'BEGIN{FS=OFS="\t"; print "GeneID\tChr\tStart\tEnd\tStrand"}{print $4, $1, $2+1, $3, "."}' ./HMMRATAC/$sampleID"_peaks.gappedPeak" \
   > ./HMMRATAC/$sampleID"_peaks.saf"
 
-### count
-featureCounts -p -a ./HMMRATAC/$sampleID"_peaks.saf" -F SAF -o ./HMMRATAC/$sampleID-readCountInPeaks.txt $input
+#Sort peak by -log10(p-value)
+awk 'BEGIN{FS=OFS="\t"; print "GeneID\tChr\tStart\tEnd\tStrand"}{print $1, $2, $3, $4, $13, ".", "-1", "-1", "-1"}' ./HMMRATAC/$sampleID"_peaks.gappedPeak" \
+  | tail -n +2 | sort -k5,5nr  > ./HMMRATAC/$sampleID"_peaks_sorted.bed"
 
+### count
+featureCounts -p --countReadPairs -a ./HMMRATAC/$sampleID"_peaks.saf" -F SAF -o ./HMMRATAC/$sampleID-readCountInPeaks.txt $input
+
+# Usage: featureCounts [options] -a <annotation_file> -o <output_file> input_file1 [input_file2] ... 
+# -p                  Specify that input data contain paired-end reads. To
+#                      perform fragment counting (ie. counting read pairs), the
+#                      '--countReadPairs' parameter should also be specified in
+#                      addition to this parameter.
+# --countReadPairs    Count read pairs (fragments) instead of reads. This option
+#                      is only applicable for paired-end reads.
+
+
+###################
 ###################
 ## USAGE ####
 #   java -jar HMMRATAC_V1.2_exe.jar -b <SortedBAM> -i <BAMIndex> -g <GenomeStatsFile> <options>

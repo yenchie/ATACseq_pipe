@@ -663,8 +663,16 @@ function mappp(){
           else
               echo "No processing tmp data, .fq files found."
           fi
-  
-          
+
+          if ls ./*trim.nochloro.nomt.nonclonal.unique.bam 1> /dev/null 2>&1; then
+              # Remove all .fq files
+              rm ./*trim.nochloro.nomt.nonclonal.unique.bam
+              echo "remove processing tmp data, *trim.nochloro.nomt.nonclonal.unique.bam file."
+          else
+              echo "No processing tmp data, *trim.nochloro.nomt.nonclonal.unique.bam file found."
+          fi
+
+           
           echo -e "$sampleID data recorded in ./$sampleID.summary.txt"
           
           
@@ -776,7 +784,7 @@ function mappp(){
         samtools view -@ 12 -h -f 2 $sampleID.trim.nochloro.nomt.nonclonal.unique.sort.bam | samtools sort -@ 12 -T temp -o $sampleID.trim.nochloro.nomt.nonclonal.unique.f2.sort.bam -
         samtools index $sampleID.trim.nochloro.nomt.nonclonal.unique.f2.sort.bam
         pcr=$(samtools view -c "$sampleID.trim.nochloro.nomt.nonclonal.unique.f2.sort.bam")
-        echo -e "\n$sampleID peak calling input pairs: $pcr\n" >> ./$sampleID.summary.txt
+        echo -e "\n$sampleID peak calling input reads: $pcr\n" >> ./$sampleID.summary.txt
         
         ## peak calling by MACS2 
           echo "peak calling tool: MACS2, path: $MACS2"
@@ -794,7 +802,7 @@ function mappp(){
         ## peak calling by HMMRATAC 
           # The summit is 1bp, so subtract 50 from the start and add 50 to the stop for newStart and newStop and use that resulting bed file as the input for DiffBind
   
-          echo "peak calling tool: MACS2, path: $HMMRATAC"
+          echo "peak calling tool: HMMRATAC, path: $HMMRATAC"
           bash $HMMRATAC $sampleID $sampleID.trim.nochloro.nomt.nonclonal.unique.sort.bam 2> HMMRATAC.peakcalling.log
 
           #bash /bcst/JYL/JYL_qnap_2/YCWang/0_Script/Project/Gm/ATACseq/tool/HMMRATAC.peakcalling.v.1.sh $sampleID.f2 $sampleID.trim.nochloro.nomt.nonclonal.unique.f2.sort.bam 2> HMMRATAC.peakcalling.2.log
