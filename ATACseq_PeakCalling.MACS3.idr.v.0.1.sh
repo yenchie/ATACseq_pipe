@@ -63,7 +63,8 @@ outfolder=$2
 totalcount=$(cat $1 | wc -l)
 njob=6 #define num of sample max-load
 ref="Gm724"
-peakcall_function="/bcst/JYL/JYL_qnap_2/YCWang/0_Script/000/Pipeline/ATAC_pipe/tool/HMMRATAC.peakcalling.v.1.sh"
+peakcall_function="/bcst/JYL/JYL_qnap_2/YCWang/0_Script/000/Pipeline/ATAC_pipe/tool/MACS3.peakcalling.v.1.0.sh"
+MACS3_PEAK_suffix="poisson.ATAC_accessible_regions.sorted.narrowPeak"
 #=======================================================================#
 # config:
 
@@ -122,21 +123,26 @@ function rep_idr(){
     fi
     
     cd ./${EXPT}
-    samtools view -@ 12 -H ${NAME} > ./${EXPT}_header.sam
-    nreads=$(samtools view -@ 12 -c "$NAME")
-    nlines=$(( (nreads + 1) / 2 ))
-    
-    # This will shuffle the lines in the file and split itinto two SAM files
-    samtools view -@ 12 ${NAME} | shuf - | split -d -l ${nlines} - "./${EXPT}" 
-    cat ./${EXPT}_header.sam ./${EXPT}00 | samtools view -@ 12 -bS | samtools sort -@ 12 -T temp - > ./${EXPT}_00.bam
-    cat ./${EXPT}_header.sam ./${EXPT}01 | samtools view -@ 12 -bS | samtools sort -@ 12 -T temp - > ./${EXPT}_01.bam
 
-    samtools index ./${EXPT}_00.bam
-    samtools index ./${EXPT}_01.bam
+    if [ -f  ./${EXPT}_00.bam ]; then
+        echo "$EXPT bam splited done"
+    else
+        samtools view -@ 12 -H ${NAME} > ./${EXPT}_header.sam
+        nreads=$(samtools view -@ 12 -c "$NAME")
+        nlines=$(( (nreads + 1) / 2 ))
+        
+        # This will shuffle the lines in the file and split itinto two SAM files
+        samtools view -@ 12 ${NAME} | shuf - | split -d -l ${nlines} - "./${EXPT}" 
+        cat ./${EXPT}_header.sam ./${EXPT}00 | samtools view -@ 12 -bS | samtools sort -@ 12 -T temp - > ./${EXPT}_00.bam
+        cat ./${EXPT}_header.sam ./${EXPT}01 | samtools view -@ 12 -bS | samtools sort -@ 12 -T temp - > ./${EXPT}_01.bam
 
-    rm ./${EXPT}_header.sam
-    rm ./${EXPT}00
-    rm ./${EXPT}01  
+        samtools index ./${EXPT}_00.bam
+        samtools index ./${EXPT}_01.bam
+
+        rm ./${EXPT}_header.sam
+        rm ./${EXPT}00
+        rm ./${EXPT}01  
+    fi
     
     #Peak calling on pseudoreplicates
  
@@ -146,23 +152,23 @@ function rep_idr(){
     echo "Calling peaks for pseudoreplicate0"
     sampleID="$GroupID.$rep.0"
     echo $sampleID
-    peak1=./HMMRATAC/$sampleID"_peaks_sorted.$peak_type" 
+    peak1=./MACS3/$sampleID.$MACS3_PEAK_suffix
     if [ -f $peak1 ]; then
       echo "$sampleID peakcalling already done"
     else
-      ## peak calling by HMMRATAC 
-        bash $peakcall_function $sampleID ./${EXPT}_00.bam 2> $sampleID.HMMRATAC.peakcalling.log
+      ## peak calling by MACS3 
+        bash $peakcall_function $sampleID ./${EXPT}_00.bam 2> $sampleID.MACS3.peakcalling.log
     fi
     
     echo "Calling peaks for pseudoreplicate1"
     sampleID="$GroupID.$rep.1"
     echo $sampleID
-    peak2=./HMMRATAC/$sampleID"_peaks_sorted.$peak_type" 
+    peak2=./MACS3/$sampleID.$MACS3_PEAK_suffix
     if [ -f $peak2 ]; then
       echo "$sampleID peakcalling already done"
     else
-      ## peak calling by HMMRATAC 
-        bash $peakcall_function $sampleID ./${EXPT}_01.bam 2> $sampleID.HMMRATAC.peakcalling.log
+      ## peak calling by MACS3 
+        bash $peakcall_function $sampleID ./${EXPT}_01.bam 2> $sampleID.MACS3.peakcalling.log
     fi
 
 
@@ -170,9 +176,11 @@ function rep_idr(){
     sampleID=NULL
     echo $peak1 $peak2
     echo "Running IDR on pseudoreplicates..."
+    
     time idr --samples $peak1 $peak2 \
       --input-file-type $peak_type --output-file ./${EXPT}_pseudorep-idr --rank score --allow-negative-scores --plot --log-output-file ./${EXPT}_idr.log
     echo $peak1 $peak2 >> ./${EXPT}_idr.log
+    
     
     cd ../
     echo "$NAME idr finished"
@@ -221,19 +229,19 @@ function run_idr_peakcall(){
   # 3.control
   # output:
   # sampleID="$GroupID.$repn"
-  # ./sampleID/MACS2/$outname"_peaks.$peak_type"
-  # ./sampleID/MACS2/$sampleID."_peaks_sorted.$peak_type"
+  # ./sampleID/MACS2/$outname.$MACS3_PEAK_suffix
+  # ./sampleID/MACS2/$sampleID.$MACS3_PEAK_suffix
   
   sampleID="$GroupID.$rep1"
   IP=$rep1_bam
   echo $sampleID
   echo $IP
-  if [ -f ./HMMRATAC/$sampleID"_peaks_sorted.$peak_type" ]; then
+  if [ -f ./MACS3/$sampleID.$MACS3_PEAK_suffix ]; then
     echo "$sampleID peakcalling already done"
   else
-    ## peak calling by HMMRATAC 
-          echo "peak calling tool: HMMRATAC, path: $peakcall_function"
-          bash $peakcall_function $sampleID $IP 2> HMMRATAC.peakcalling.log
+    ## peak calling by MACS3 
+          echo "peak calling tool: MACS3, path: $peakcall_function"
+          bash $peakcall_function $sampleID $IP 2> MACS3.peakcalling.log
           echo -e "$sampleID Peakcalling Done"
   fi
   
@@ -241,12 +249,12 @@ function run_idr_peakcall(){
   IP=$rep2_bam
   echo $sampleID
   echo $IP
-  if [ -f ./HMMRATAC/$sampleID"_peaks_sorted.$peak_type" ]; then
+  if [ -f ./MACS3/$sampleID.$MACS3_PEAK_suffix ]; then
     echo "$sampleID peakcalling already done"
   else
-    ## peak calling by HMMRATAC 
-        echo "peak calling tool: HMMRATAC, path: $peakcall_function"
-        bash $peakcall_function $sampleID $IP 2> HMMRATAC.peakcalling.log
+    ## peak calling by MACS3 
+        echo "peak calling tool: MACS3, path: $peakcall_function"
+        bash $peakcall_function $sampleID $IP 2> MACS3.peakcalling.log
         echo -e "$sampleID Peakcalling Done"
   fi
   
@@ -277,36 +285,39 @@ function run_idr_peakcall(){
   if [ -f ./${EXPT}/${EXPT}-idr ]; then
     echo "./${EXPT}/${EXPT}-idr exist"
   else
+  ## MACS3 peakcall output suffix: poisson.ATAC_accessible_regions.sorted.narrowPeak
+  
     time idr --samples \
-      $outfolder/$GroupID/HMMRATAC/$GroupID.$rep1"_peaks_sorted.$peak_type" \
-      $outfolder/$GroupID/HMMRATAC/$GroupID.$rep2"_peaks_sorted.$peak_type" \
+      $outfolder/$GroupID/MACS3/$GroupID.$rep1.$MACS3_PEAK_suffix \
+      $outfolder/$GroupID/MACS3/$GroupID.$rep2.$MACS3_PEAK_suffix \
       --input-file-type $peak_type --output-file ./${EXPT}/${EXPT}-idr --rank score --allow-negative-scores --plot --log-output-file ./${EXPT}/${EXPT}_idr.log
       
       echo "Nt done"
   fi   
     
-  ##########################  
-  
-  # N1, N2, self_pseudorep
-  EXPT="N_$rep1"
-  NAME="$rep1_bam"
-  
-  if [ -f ./${EXPT}/${EXPT}_pseudorep-idr ]; then
-    echo "./${EXPT}/${EXPT}_pseudorep-idr exist"
-  else
-    rep_idr $EXPT $NAME
-    echo "$EXPT done"
-  fi
-  
-  EXPT="N_$rep2"
-  NAME="$rep2_bam"
-  
-  if [ -f ./${EXPT}/${EXPT}_pseudorep-idr ]; then
-    echo "./${EXPT}/${EXPT}_pseudorep-idr exist"
-  else
-    rep_idr $EXPT $NAME
-    echo "$EXPT done"
-  fi
+  ########################## 
+
+                    
+                    # # N1, N2, self_pseudorep
+                    # EXPT="N_$rep1"
+                    # NAME="$rep1_bam"
+                    
+                    # if [ -f ./${EXPT}/${EXPT}_pseudorep-idr ]; then
+                    #   echo "./${EXPT}/${EXPT}_pseudorep-idr exist"
+                    # else
+                    #   rep_idr $EXPT $NAME
+                    #   echo "$EXPT done"
+                    # fi
+                    
+                    # EXPT="N_$rep2"
+                    # NAME="$rep2_bam"
+                    
+                    # if [ -f ./${EXPT}/${EXPT}_pseudorep-idr ]; then
+                    #   echo "./${EXPT}/${EXPT}_pseudorep-idr exist"
+                    # else
+                    #   rep_idr $EXPT $NAME
+                    #   echo "$EXPT done"
+                    # fi
 
   # Np, pooled_pseudorep
   #Merge treatment BAMS
@@ -386,10 +397,10 @@ function run_idr_peakcall(){
 
   elif [ "$peak_type" == "bed" ]; then
   
-    awk 'BEGIN{OFS="\t"} $5>='"${IDR_THRESH_TRANSFORMED}"' {print $1,$2,$3,$4,$5,$6,$7,$8,$9}' ./Nt_$rep1.$rep2/Nt_$rep1.$rep2-idr \
+    awk 'BEGIN{OFS="\t"} $5>='"${IDR_THRESH_TRANSFORMED}"' {print $0}' ./Nt_$rep1.$rep2/Nt_$rep1.$rep2-idr \
     | sort | uniq | sort -k7n,7n > ./$rep1.$rep2.conservative.IDR.$IDR_THRESH.$peak_type
     
-    awk 'BEGIN{OFS="\t"} $5>='"${IDR_THRESH_TRANSFORMED}"' {print $1,$2,$3,$4,$5,$6,$7,$8,$9}' ./N_pooledPseudo_$rep1.$rep2/N_pooledPseudo_${rep1}.${rep2}_pseudorep-idr \
+    awk 'BEGIN{OFS="\t"} $5>='"${IDR_THRESH_TRANSFORMED}"' {print $0}' ./N_pooledPseudo_$rep1.$rep2/N_pooledPseudo_${rep1}.${rep2}_pseudorep-idr \
       | sort | uniq | sort -k7n,7n > ./$rep1.$rep2.optimal.IDR.$IDR_THRESH.$peak_type
 
   else
@@ -409,19 +420,19 @@ function run_idr_peakcall(){
   done
   echo "" >> ./$summaryNAME
 
-  awk -v rep1="$rep1" -v rep2="$rep2" '
-  $1 ~ "./N_" rep1 {N1=$2}
-  $1 ~ "./N_" rep2 {N2=$2}
-  END {
-      if (N1 && N2) {
-          maxN = (N1 > N2) ? N1 : N2;
-          minN = (N1 > N2) ? N2 : N1;
-          ratio = (N1 > N2) ? "N_" rep1 "/N_" rep2 : "N_" rep2 "/N_" rep1;
-          print "self-consistency:", ratio, ":", maxN, "/", minN, "=", maxN/minN;
-      }
-  }' ./$summaryNAME >> ./$summaryNAME
+              # awk -v rep1="$rep1" -v rep2="$rep2" '
+              # $1 ~ "./N_" rep1 {N1=$2}
+              # $1 ~ "./N_" rep2 {N2=$2}
+              # END {
+              #     if (N1 && N2) {
+              #         maxN = (N1 > N2) ? N1 : N2;
+              #         minN = (N1 > N2) ? N2 : N1;
+              #         ratio = (N1 > N2) ? "N_" rep1 "/N_" rep2 : "N_" rep2 "/N_" rep1;
+              #         print "self-consistency:", ratio, ":", maxN, "/", minN, "=", maxN/minN;
+              #     }
+              # }' ./$summaryNAME >> ./$summaryNAME
 
-  
+              
   awk  -v rep1="$rep1" -v rep2="$rep2" '
       /\.\/N_pooledPseudo_'$rep1'.'$rep2'/ {Np=$2} /\.\/Nt_'$rep1'.'$rep2'/ {Nt=$2} END {
       if (Np && Nt) {

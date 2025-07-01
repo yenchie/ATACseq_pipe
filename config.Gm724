@@ -24,5 +24,6 @@ Shift_bam=/bcst/JYL/JYL_qnap_2/YCWang/0_Script/000/Pipeline/ATAC_pipe/tool/shift
 SPP=/bcst/JYL/JYL_qnap_2/YCWang/0_Script/000/Pipeline/ATAC_pipe/tool/SPP.v.3.0.sh
 
 MACS2=/bcst/JYL/JYL_qnap_2/YCWang/0_Script/000/Pipeline/ATAC_pipe/tool/MACS2.peakcalling.v.1.sh
+MACS3=/bcst/JYL/JYL_qnap_2/YCWang/0_Script/000/Pipeline/ATAC_pipe/tool/MACS3.peakcalling.v.0.1.sh
 
 HMMRATAC=/bcst/JYL/JYL_qnap_2/YCWang/0_Script/000/Pipeline/ATAC_pipe/tool/HMMRATAC.peakcalling.v.1.sh

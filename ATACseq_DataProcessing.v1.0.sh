@@ -797,38 +797,52 @@ function mappp(){
           echo "peakcalling RiP by MACS2: $RiP" >> ./$sampleID.summary.txt
           echo "peakcalling total input alignments by MACS2: $total" >> ./$sampleID.summary.txt
           echo "peakcalling FRiP by MACS2: $FRiP" >> ./$sampleID.summary.txt
-          
-        
-        ## peak calling by HMMRATAC 
-          # The summit is 1bp, so subtract 50 from the start and add 50 to the stop for newStart and newStop and use that resulting bed file as the input for DiffBind
-  
-          echo "peak calling tool: HMMRATAC, path: $HMMRATAC"
-          bash $HMMRATAC $sampleID $sampleID.trim.nochloro.nomt.nonclonal.unique.sort.bam 2> HMMRATAC.peakcalling.log
 
-          #bash /bcst/JYL/JYL_qnap_2/YCWang/0_Script/Project/Gm/ATACseq/tool/HMMRATAC.peakcalling.v.1.sh $sampleID.f2 $sampleID.trim.nochloro.nomt.nonclonal.unique.f2.sort.bam 2> HMMRATAC.peakcalling.2.log
-
-          # Filter HMMRATAC output by the score, if desired.
-          # Score threshold will depend on dataset, score type and user preference. A threshold of 10 would be:
-          #
-          # awk -v OFS="\t" '$13>=10 {print}' $sampleID"_peaks.gappedPeak" > $sampleID.filteredPeaks.gappedPeak
-          #
-          # # To filter the summit file by the same threshold:
-          #
-          # awk -v OFS="\t" '$5>=10 {print}' $sampleID"_summits.bed" > $sampleID.filteredSummits.bed
-          #
-          # NOTE: HMMRATAC will report all peaks that match the structure defined by the model, including weak peaks. 
-          #       Filtering by score can be used to retain stronger peaks. 
-          #       Lower score = higher sensitivity and lower precision, 
-          #       Higher score = lower sensitivity and higher precision.
-          
-          RiP=$(cat ./HMMRATAC/$sampleID-readCountInPeaks.txt.summary | awk '$1 == "Assigned" { sum += $2 } END { print sum }')
-          total=$(cat ./HMMRATAC/$sampleID-readCountInPeaks.txt.summary | awk 'BEGIN { sum = 0 } NR > 1 { sum += $2 } END { print sum }')
-  
-          FRiP=$(echo "scale=4; $RiP / $total" | bc)
-          echo "peakcalling RiP by HMMRATAC: $RiP" >> ./$sampleID.summary.txt
-          echo "peakcalling total input reads by HMMRATAC: $total" >> ./$sampleID.summary.txt
-          echo "peakcalling FRiP by HMMRATAC: $FRiP" >> ./$sampleID.summary.txt
+        # ## peak calling by MACS3
+        # echo "peak calling tool: MACS3, path: $MACS3"
+        # bash $MACS3 $sampleID $sampleID.trim.nochloro.nomt.nonclonal.unique.f2.sort.bam 2> MACS3.peakcalling.log
         
+        # RiP=$(cat ./MACS3/$sampleID-readCountInPeaks.txt.summary | awk '$1 == "Assigned" { sum += $2 } END { print sum }')
+        # total=$(cat ./MACS3/$sampleID-readCountInPeaks.txt.summary | awk 'BEGIN { sum = 0 } NR > 1 { sum += $2 } END { print sum }')
+
+        # FRiP=$(echo "scale=4; $RiP / $total" | bc)
+        # echo "peakcalling RiP by MACS3: $RiP" >> ./$sampleID.summary.txt
+        # echo "peakcalling total input alignments by MACS3: $total" >> ./$sampleID.summary.txt
+        # echo "peakcalling FRiP by MACS3: $FRiP" >> ./$sampleID.summary.txt
+          
+          
+
+                    ## retired --------------------------------  
+                    # ## peak calling by HMMRATAC 
+                    #   # The summit is 1bp, so subtract 50 from the start and add 50 to the stop for newStart and newStop and use that resulting bed file as the input for DiffBind
+              
+                    #   echo "peak calling tool: HMMRATAC, path: $HMMRATAC"
+                    #   bash $HMMRATAC $sampleID $sampleID.trim.nochloro.nomt.nonclonal.unique.sort.bam 2> HMMRATAC.peakcalling.log
+
+                    #   #bash /bcst/JYL/JYL_qnap_2/YCWang/0_Script/Project/Gm/ATACseq/tool/HMMRATAC.peakcalling.v.1.sh $sampleID.f2 $sampleID.trim.nochloro.nomt.nonclonal.unique.f2.sort.bam 2> HMMRATAC.peakcalling.2.log
+
+                    #   # Filter HMMRATAC output by the score, if desired.
+                    #   # Score threshold will depend on dataset, score type and user preference. A threshold of 10 would be:
+                    #   #
+                    #   # awk -v OFS="\t" '$13>=10 {print}' $sampleID"_peaks.gappedPeak" > $sampleID.filteredPeaks.gappedPeak
+                    #   #
+                    #   # # To filter the summit file by the same threshold:
+                    #   #
+                    #   # awk -v OFS="\t" '$5>=10 {print}' $sampleID"_summits.bed" > $sampleID.filteredSummits.bed
+                    #   #
+                    #   # NOTE: HMMRATAC will report all peaks that match the structure defined by the model, including weak peaks. 
+                    #   #       Filtering by score can be used to retain stronger peaks. 
+                    #   #       Lower score = higher sensitivity and lower precision, 
+                    #   #       Higher score = lower sensitivity and higher precision.
+                      
+                    #   RiP=$(cat ./HMMRATAC/$sampleID-readCountInPeaks.txt.summary | awk '$1 == "Assigned" { sum += $2 } END { print sum }')
+                    #   total=$(cat ./HMMRATAC/$sampleID-readCountInPeaks.txt.summary | awk 'BEGIN { sum = 0 } NR > 1 { sum += $2 } END { print sum }')
+              
+                    #   FRiP=$(echo "scale=4; $RiP / $total" | bc)
+                    #   echo "peakcalling RiP by HMMRATAC: $RiP" >> ./$sampleID.summary.txt
+                    #   echo "peakcalling total input reads by HMMRATAC: $total" >> ./$sampleID.summary.txt
+                    #   echo "peakcalling FRiP by HMMRATAC: $FRiP" >> ./$sampleID.summary.txt
+                    
         
         
       echo ""
